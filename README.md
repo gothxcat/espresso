@@ -5,7 +5,7 @@ Prototype file manager written in Java with the Swing/AWT APIs.
 ## Prerequisites
 
 - JDK >=17
-- maven
+- Maven >=4.0.0
 
 ## Build
 
