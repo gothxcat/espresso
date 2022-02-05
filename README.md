@@ -1,6 +1,6 @@
-# Java GUI Example
+# Espresso File Manager
 
-Java Swing/AWT sample project with resource management and window structure
+Prototype file manager written in Java with the Swing/AWT APIs.
 
 ## Prerequisites
 
@@ -13,4 +13,4 @@ Java Swing/AWT sample project with resource management and window structure
 
 ## Running
 
-`java -jar target/javatests-<VERSION>.jar`
+`java -jar target/espresso-<VERSION>.jar`

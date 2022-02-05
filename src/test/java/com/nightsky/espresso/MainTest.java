@@ -1,4 +1,4 @@
-package com.gothcat.javatests;
+package com.nightsky.espresso;
 
 import static org.junit.Assert.assertTrue;
 

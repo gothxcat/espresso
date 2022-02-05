@@ -1,26 +1,33 @@
-package com.gothcat.javatests;
+package com.nightsky.espresso;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public final class Resources
 {
+    public static Map<String,String> strings = new HashMap<>();
+
     private final static String languageBundleClassName = "StringResource";
     private final static Locale fallbackLocale = new Locale("en", "US");
 
-    public static String TITLE = "";
-    public static String LABEL_MESSAGE = "";
-    public static String BUTTON_OK = "";
-    public static String MENU_FILE = "";
-    public static String MENU_EXIT = "";
-
-    private static final String[] keys = {
+    private static final String[] stringKeys = {
         "TITLE",
-        "LABEL_MESSAGE",
-        "BUTTON_OK",
         "MENU_FILE",
-        "MENU_EXIT"
+        "MENU_EXIT",
+        "MENU_GO",
+        "MENU_UP",
+        "MENU_VIEW",
+        "MENU_TOGGLE_MENU",
+        "TABLE_CELL_NAME",
+        "TABLE_CELL_SIZE",
+        "TABLE_CELL_TYPE",
+        "TABLE_CELL_DATEMODIFIED",
+        "TABLE_CELL_FILE",
+        "TABLE_CELL_DIRECTORY",
+        "BUTTON_UP",
+        "EXCEPT_SYSTEM_APPEARANCE"
     };
 
     private static ResourceBundle languageBundle;
@@ -37,14 +44,17 @@ public final class Resources
                 languageBundle = ResourceBundle.getBundle(languageBundleName, fallbackLocale);
             }
 
-            for (String key : keys) {
-                Field field = Resources.class.getDeclaredField(key);
-                field.set(Resources.class, languageBundle.getString(key));
-            }
+            for (String key : stringKeys)
+                strings.put(key, languageBundle.getString(key));
         } catch (Exception e) {
             System.out.println("Unable to load string resources from bundle " + languageBundleName + ":");
             System.out.println(e.getLocalizedMessage());
             System.exit(1);
         }
+    }
+
+    public static String getString(String key)
+    {
+        return strings.get(key);
     }
 }

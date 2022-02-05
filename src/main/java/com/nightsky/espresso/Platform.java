@@ -1,9 +1,13 @@
-package com.gothcat.javatests;
+package com.nightsky.espresso;
+
+import java.time.ZoneId;
 
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public class Platform {
+    public static final ZoneId zoneId = ZoneId.systemDefault();
+
     private static final String osName = System.getProperty("os.name").toLowerCase();
     private static final String gtkAppearanceClassName = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
 
@@ -39,6 +43,6 @@ public class Platform {
             }
         }
         
-        return (UIManager.getSystemLookAndFeelClassName());
+        return UIManager.getSystemLookAndFeelClassName();
     }
 }
