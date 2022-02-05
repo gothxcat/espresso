@@ -11,6 +11,6 @@ Prototype file manager written in Java with the Swing/AWT APIs.
 
 `mvn verify`
 
-## Running
+## Run
 
 `java -jar target/espresso-<VERSION>.jar`
