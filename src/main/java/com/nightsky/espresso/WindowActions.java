@@ -58,6 +58,24 @@ public class WindowActions
         }
     }
 
+    public final class NewDirectoryActionListener extends ComponentActionListener
+    {
+        @Override
+        protected void action()
+        {
+            window.newdir();
+        }
+    }
+
+    public final class ReloadActionListener extends ComponentActionListener
+    {
+        @Override
+        protected void action()
+        {
+            window.mainTable.updateContents();
+        }
+    }
+
     public final class ToggleMenuActionListener extends ComponentActionListener
     {
         @Override

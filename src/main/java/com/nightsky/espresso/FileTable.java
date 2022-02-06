@@ -54,6 +54,11 @@ public class FileTable extends JTable {
         chdir(directory);
     }
 
+    public File getdir()
+    {
+        return directory;
+    }
+
     public void chdir(File directory)
     {
         try {
@@ -62,9 +67,7 @@ public class FileTable extends JTable {
             return;
         }
 
-        clearSelection();
         updateContents();
-        revalidate();
     }
 
     public void updir()
@@ -98,6 +101,9 @@ public class FileTable extends JTable {
             if (directoryListener != null)
                 directoryListener.onDirectoryChanged(directory);
         }
+
+        clearSelection();
+        revalidate();
     }
 
     public File getFileAt(int row)

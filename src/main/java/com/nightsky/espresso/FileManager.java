@@ -29,7 +29,7 @@ public class FileManager {
                         break;
                     case size:
                         fileObject.setAttribute(FileManagerAttribute.size,
-                            Long.toString(file.length())
+                            formatSize(file.length())
                         );
                         break;
                     case type:
@@ -52,6 +52,15 @@ public class FileManager {
         return fileList;
     }
 
+    public static String formatSize(long size)
+    {
+        StringBuilder string = new StringBuilder(Long.toString(size));
+        for (int i = string.length() - 3; i > 0; i -= 3)
+            string.insert(i, ',');
+        
+        return string.toString();
+    }
+
     public static ZonedDateTime zoneDateFromEpoch(long msSinceEpoch)
     {
         return Instant.ofEpochMilli(msSinceEpoch).atZone(Platform.zoneId);
@@ -60,6 +69,57 @@ public class FileManager {
     private static String getFileTypeString(File file)
     {
         return file.isDirectory() ? Resources.getString("TABLE_CELL_DIRECTORY") : Resources.getString("TABLE_CELL_FILE");
+    }
+
+    public static File newdir(File currentDirectory, String filename)
+    {
+        File newDirectory = new File(Paths.get(currentDirectory.getPath(), filename).toAbsolutePath().toString());
+        if (newDirectory.mkdir())
+            return newDirectory;
+        else
+            return null;
+    }
+
+    public static String getDetails(File directory)
+    {
+        long size = 0;
+        int directoryCount = 0;
+        int fileCount = 0;
+        for (File file : directory.listFiles()) {
+            size += file.length();
+            if (file.isDirectory())
+                directoryCount++;
+            else
+                fileCount++;
+        }
+
+        String directoryString = "";
+        if (directoryCount == 1)
+            directoryString = Integer.toString(directoryCount) + " " + Resources.getString("LABEL_DIRECTORY_SINGLE");
+        else if (directoryCount > 0)
+            directoryString = Integer.toString(directoryCount) + " " + Resources.getString("LABEL_DIRECTORY_MULTIPLE");
+
+        String fileString = "";
+        if (fileCount == 1)
+            fileString = Integer.toString(fileCount) + " " + Resources.getString("LABEL_FILE_SINGLE");
+        else if (fileCount > 0)
+            fileString = Integer.toString(fileCount) + " " + Resources.getString("LABEL_FILE_MULTIPLE");
+
+        String sizeString = "";
+        if (size > 0)
+            sizeString = formatSize(size) + " " + Resources.getString("LABEL_BYTES");
+
+        String details;
+        if (directoryCount > 0 && fileCount > 0)
+            details = directoryString + ", " + fileString + "; " + sizeString;
+        else if (directoryCount > 0)
+            details = directoryString + "; " + sizeString;
+        else if (fileCount > 0)
+            details = fileString + "; " + sizeString;
+        else
+            details = "0 " + Resources.getString("LABEL_ITEMS");
+
+        return details;
     }
 
     public static enum FileManagerAttribute
