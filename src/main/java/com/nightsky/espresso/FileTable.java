@@ -90,16 +90,19 @@ public class FileTable extends JTable {
                 {
                     String[] attributesA = a.getAttributeStrings();
                     String[] attributesB = b.getAttributeStrings();
-                    if (attributesA.length >= sortColumn && attributesB.length >= sortColumn)
+                    if (attributesA.length >= sortColumn && attributesB.length >= sortColumn) {
                         return attributesA[sortColumn].compareTo(attributesB[sortColumn]);
+                    }
+
                     return 0;
                 }
             });
 
             model.updateDataFromList(contents);
 
-            if (directoryListener != null)
+            if (directoryListener != null) {
                 directoryListener.onDirectoryChanged(directory);
+            }
         }
 
         clearSelection();
@@ -108,8 +111,9 @@ public class FileTable extends JTable {
 
     public File getFileAt(int row)
     {
-        if (row > -1 && row < contents.size())
+        if (row > -1 && row < contents.size()) {
             return contents.get(row).file;
+        }
         return null;
     }
 
@@ -142,8 +146,9 @@ public class FileTable extends JTable {
         public void updateDataFromList(List<FileManagerObject> objects)
         {
             List<String[]> dataList = new ArrayList<String[]>();
-            for (FileManagerObject object : objects)
+            for (FileManagerObject object : objects) {
                 dataList.add(object.getAttributeStrings());
+            }
 
             updateData(dataList.toArray(new Object[0][]));
         }
@@ -187,8 +192,9 @@ public class FileTable extends JTable {
             int row = table.rowAtPoint(point);
             if (event.getClickCount() % 2 == 0 && row != -1) {
                 File file = table.getFileAt(row);
-                if (file.isDirectory())
+                if (file.isDirectory()) {
                     table.chdir(file);
+                }
             }
         }
     }

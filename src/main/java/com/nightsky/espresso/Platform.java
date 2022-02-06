@@ -1,11 +1,14 @@
 package com.nightsky.espresso;
 
+import java.awt.Color;
 import java.time.ZoneId;
 
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public class Platform {
+    public final static Color caretColor = Color.WHITE;
+
     public static final ZoneId zoneId = ZoneId.systemDefault();
 
     private static final String osName = System.getProperty("os.name").toLowerCase();
@@ -38,8 +41,9 @@ public class Platform {
         if (isUnix()) {
             LookAndFeelInfo[] appearances = UIManager.getInstalledLookAndFeels();
             for (LookAndFeelInfo appearance : appearances) {
-                if (appearance.getClassName() == gtkAppearanceClassName)
-                    return (gtkAppearanceClassName);
+                if (appearance.getClassName() == gtkAppearanceClassName) {
+                    return gtkAppearanceClassName;
+                }
             }
         }
         

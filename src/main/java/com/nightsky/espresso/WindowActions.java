@@ -4,6 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+
+import javax.swing.JTextField;
 
 public class WindowActions
 {
@@ -12,11 +15,22 @@ public class WindowActions
     WindowActions(Window window)
     {
         this.window = window;
+        addListeners();
     }
 
-    public abstract class AbstractComponentActionListener implements ActionListener, KeyListener {}
+    private void addListeners()
+    {
+        window.closeActionListener = new CloseActionListener();
+        window.trashActionListener = new TrashActionListener();
+        window.upActionListener = new UpActionListener();
+        window.newDirectoryActionListener = new NewDirectoryActionListener();
+        window.reloadActionListener = new ReloadActionListener();
+        window.toggleMenuActionListener = new ToggleMenuActionListener();
+    }
 
-    private class ComponentActionListener extends AbstractComponentActionListener
+    public abstract class AbstractMultipleActionListener implements ActionListener, KeyListener {}
+
+    private class MultipleActionListener extends AbstractMultipleActionListener
     {
         protected void action() {}
 
@@ -40,7 +54,12 @@ public class WindowActions
         public void keyTyped(KeyEvent arg) {}
     }
 
-    public final class CloseActionListener extends ComponentActionListener
+    private final class TrashActionListener extends MultipleActionListener
+    {
+
+    }
+
+    private final class CloseActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
@@ -49,7 +68,7 @@ public class WindowActions
         }
     }
 
-    public final class UpActionListener extends ComponentActionListener
+    private final class UpActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
@@ -58,7 +77,7 @@ public class WindowActions
         }
     }
 
-    public final class NewDirectoryActionListener extends ComponentActionListener
+    private final class NewDirectoryActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
@@ -67,7 +86,7 @@ public class WindowActions
         }
     }
 
-    public final class ReloadActionListener extends ComponentActionListener
+    private final class ReloadActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
@@ -76,7 +95,7 @@ public class WindowActions
         }
     }
 
-    public final class ToggleMenuActionListener extends ComponentActionListener
+    private final class ToggleMenuActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
@@ -87,6 +106,26 @@ public class WindowActions
             } else {
                 window.menuBar.setVisible(true);
                 window.menuBar.requestFocus();
+            }
+        }
+    }
+
+    public final class DirectoryFieldActionListener implements ActionListener
+    {
+        private JTextField directoryField;
+
+        DirectoryFieldActionListener(JTextField directoryField)
+        {
+            this.directoryField = directoryField;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent arg0) {
+            File file = new File(directoryField.getText());
+            if (file.isDirectory()) {
+                window.mainTable.chdir(file);
+            } else {
+                window.setDirectoryFieldContents(directoryField, window.mainTable.getdir());
             }
         }
     }

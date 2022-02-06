@@ -74,10 +74,11 @@ public class FileManager {
     public static File newdir(File currentDirectory, String filename)
     {
         File newDirectory = new File(Paths.get(currentDirectory.getPath(), filename).toAbsolutePath().toString());
-        if (newDirectory.mkdir())
+        if (newDirectory.mkdir()) {
             return newDirectory;
-        else
+        } else {
             return null;
+        }
     }
 
     public static String getDetails(File directory)
@@ -87,38 +88,43 @@ public class FileManager {
         int fileCount = 0;
         for (File file : directory.listFiles()) {
             size += file.length();
-            if (file.isDirectory())
+            if (file.isDirectory()) {
                 directoryCount++;
-            else
+            } else {
                 fileCount++;
+            }
         }
 
         String directoryString = "";
-        if (directoryCount == 1)
+        if (directoryCount == 1) {
             directoryString = Integer.toString(directoryCount) + " " + Resources.getString("LABEL_DIRECTORY_SINGLE");
-        else if (directoryCount > 0)
+        } else if (directoryCount > 0) {
             directoryString = Integer.toString(directoryCount) + " " + Resources.getString("LABEL_DIRECTORY_MULTIPLE");
+        }
 
         String fileString = "";
-        if (fileCount == 1)
+        if (fileCount == 1) {
             fileString = Integer.toString(fileCount) + " " + Resources.getString("LABEL_FILE_SINGLE");
-        else if (fileCount > 0)
+        } else if (fileCount > 0) {
             fileString = Integer.toString(fileCount) + " " + Resources.getString("LABEL_FILE_MULTIPLE");
+        }
 
         String sizeString = "";
-        if (size > 0)
+        if (size > 0) {
             sizeString = formatSize(size) + " " + Resources.getString("LABEL_BYTES");
+        }
 
         String details;
-        if (directoryCount > 0 && fileCount > 0)
+        if (directoryCount > 0 && fileCount > 0) {
             details = directoryString + ", " + fileString + "; " + sizeString;
-        else if (directoryCount > 0)
+        } else if (directoryCount > 0) {
             details = directoryString + "; " + sizeString;
-        else if (fileCount > 0)
+        } else if (fileCount > 0) {
             details = fileString + "; " + sizeString;
-        else
+        } else {
             details = "0 " + Resources.getString("LABEL_ITEMS");
-
+        }
+        
         return details;
     }
 
