@@ -18,7 +18,6 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
-import com.nightsky.espresso.FileTable.FileTableDirectoryListener;
 import com.nightsky.espresso.WindowActions.AbstractMultipleActionListener;
 
 public class Window extends JFrame
@@ -30,12 +29,12 @@ public class Window extends JFrame
 
     private WindowActions actions;
     public AbstractMultipleActionListener closeActionListener;
-    public AbstractMultipleActionListener trashActionListener;
+    public AbstractMultipleActionListener DeleteActionListener;
     public AbstractMultipleActionListener upActionListener;
     public AbstractMultipleActionListener newDirectoryActionListener;
     public AbstractMultipleActionListener reloadActionListener;
     public AbstractMultipleActionListener toggleMenuActionListener;
-    private ActionListener directoryFieldActionListener;
+    public ActionListener directoryFieldActionListener;
 
     private File startDirectory;
 
@@ -100,7 +99,7 @@ public class Window extends JFrame
 
 
         /* Listeners */
-        addDirectoryListeners(mainTable, directoryField, detailsLabel);
+        actions.addDirectoryListeners(mainTable, directoryField, detailsLabel);
         
 
         /* Panel */
@@ -168,27 +167,29 @@ public class Window extends JFrame
         }
     }
 
-    private void addDirectoryListeners(FileTable table, JTextField directoryField, JLabel detailsLabel)
-    {
-        table.registerDirectoryListener(new FileTableDirectoryListener(){
-            @Override
-            public void onDirectoryChanged(File directory)
-            {
-                detailsLabel.setText(FileManager.getDetails(directory));
-                setDirectoryFieldContents(directoryField, directory);
-            }
-        });
-
-        directoryFieldActionListener = actions.new DirectoryFieldActionListener(directoryField);
-        directoryField.addActionListener(directoryFieldActionListener);
-    }
-
     public void setDirectoryFieldContents(JTextField field, File directory)
     {
         try {
             field.setText(directory.getCanonicalPath());
         } catch (IOException e) {
             field.setText(directory.getPath());
+        }
+    }
+
+    public void setTrashStatus(File directory)
+    {
+        if (Platform.isWindows()) {
+            if (FileManager.getTrashFilesPath().equals(directory.getName())) {
+                menuBar.setTrashItemToDelete();
+            } else {
+                menuBar.setTrashItemToMove();
+            }
+        } else {
+            if (FileManager.getTrashFilesPath().equals(directory.getAbsolutePath())) {
+                menuBar.setTrashItemToDelete();
+            } else {
+                menuBar.setTrashItemToMove();
+            }
         }
     }
 }

@@ -72,7 +72,7 @@ public class MenuBar extends JMenuBar {
     {
         newDirectoryItem.addActionListener(window.newDirectoryActionListener);
         exitItem.addActionListener(window.closeActionListener);
-        trashItem.addActionListener(window.trashActionListener);
+        trashItem.addActionListener(window.DeleteActionListener);
         upItem.addActionListener(window.upActionListener);
         reloadMenuItem.addActionListener(window.reloadActionListener);
         toggleMenuItem.addActionListener(window.toggleMenuActionListener);
@@ -86,5 +86,15 @@ public class MenuBar extends JMenuBar {
         upItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK));
         reloadMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
         toggleMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
+    }
+
+    public void setTrashItemToMove()
+    {
+        trashItem.setText(Resources.getString("MENU_TRASH"));
+    }
+
+    public void setTrashItemToDelete()
+    {
+        trashItem.setText(Resources.getString("MENU_DELETE"));
     }
 }

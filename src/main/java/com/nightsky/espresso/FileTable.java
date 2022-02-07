@@ -132,9 +132,14 @@ public class FileTable extends JTable implements MouseListener, KeyListener {
         return null;
     }
 
-    public File getSelectedFile()
+    public List<File> getSelectedFiles()
     {
-        return getFileAt(getSelectedRow());
+        List<File> files = new ArrayList<>();
+        for (int row : getSelectedRows()) {
+            files.add(getFileAt(row));
+        }
+        
+        return files;
     }
 
     @Override

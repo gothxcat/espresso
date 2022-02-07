@@ -155,6 +155,17 @@ public class FileManager {
         }
     }
 
+    public static boolean moveToTrash(List<File> files)
+    {
+        for (File file : files) {
+            if (!moveToTrash(file)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static boolean moveToTrashJNA(FileUtils fileUtils, File file)
     {
         try {
@@ -167,16 +178,7 @@ public class FileManager {
 
     private static boolean moveToTrashUnix(File file)
     {
-        String dataHome = System.getenv("XDG_DATA_HOME");
-        if (dataHome.length() == 0) {
-            String home = System.getProperty("user.home");
-            if (home.length() == 0) {
-                home = "~";
-            }
-            dataHome = Paths.get(home, ".local", "share").toString();
-        }
-
-        Path trashPath = Paths.get(dataHome, "Trash").toAbsolutePath();
+        Path trashPath = Paths.get(getAbsoluteTrashPathUnix());
         File trashDirectory = new File(trashPath.toString());
         if (!trashDirectory.exists()) {
             if (!trashDirectory.mkdirs()) {
@@ -230,9 +232,10 @@ public class FileManager {
         FileAttribute<?> permissions = PosixFilePermissions.asFileAttribute(infoFilePermissions);
 
         try {
+            Files.deleteIfExists(infoFilePath);
             Files.createFile(infoFilePath, permissions);
 
-            BufferedWriter writer = new BufferedWriter(new FileWriter(infoFilePath.toFile()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(infoFilePath.toFile(), false));
             String fileString = escape(filePath.toString());
             String dateString = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss").withZone(Platform.zoneId).format(Instant.now());
 
@@ -258,6 +261,37 @@ public class FileManager {
         return true;
     }
 
+    public static String getTrashFilesPath()
+    {
+        FileUtils fileUtils = FileUtils.getInstance();
+        if (fileUtils.hasTrash()) {
+            return "$RECYCLE.BIN";
+        } else if (Platform.isUnix()) {
+            return getAbsoluteTrashFilesPathUnix();
+        } else {
+            return null;
+        }
+    }
+
+    public static String getAbsoluteTrashFilesPathUnix()
+    {
+        return Paths.get(getAbsoluteTrashPathUnix(), "files").toAbsolutePath().toString();
+    }
+
+    public static String getAbsoluteTrashPathUnix()
+    {
+        String dataHome = System.getenv("XDG_DATA_HOME");
+        if (dataHome.length() == 0) {
+            String home = System.getProperty("user.home");
+            if (home.length() == 0) {
+                home = "~";
+            }
+            dataHome = Paths.get(home, ".local", "share").toString();
+        }
+
+        return Paths.get(dataHome, "Trash").toAbsolutePath().toString();
+    }
+
     public static boolean delete(File file)
     {
         try {
@@ -266,6 +300,17 @@ public class FileManager {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    public static boolean delete(List<File> files)
+    {
+        for (File file : files) {
+            if (!delete(file)) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     public static String escape(String s){

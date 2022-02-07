@@ -5,13 +5,25 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.Iterator;
+import java.util.List;
 
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+
+import com.nightsky.espresso.FileTable.FileTableDirectoryListener;
 
 public class WindowActions
 {
     private Window window;
+    private DirectoryWatcherThread directoryWatcherThread;
 
     WindowActions(Window window)
     {
@@ -22,11 +34,47 @@ public class WindowActions
     private void addListeners()
     {
         window.closeActionListener = new CloseActionListener();
-        window.trashActionListener = new TrashActionListener();
+        window.DeleteActionListener = new DeleteActionListener();
         window.upActionListener = new UpActionListener();
         window.newDirectoryActionListener = new NewDirectoryActionListener();
         window.reloadActionListener = new ReloadActionListener();
         window.toggleMenuActionListener = new ToggleMenuActionListener();
+    }
+
+    public void addDirectoryListeners(FileTable table, JTextField directoryField, JLabel detailsLabel)
+    {
+        FileTableDirectoryListener directoryListener = new FileTableDirectoryListener(){
+            @Override
+            public void onDirectoryChanged(File directory)
+            {
+                detailsLabel.setText(FileManager.getDetails(directory));
+                window.setDirectoryFieldContents(directoryField, directory);
+                window.setTrashStatus(directory);
+
+                try {
+                    WatchService directoryWatcher = FileSystems.getDefault().newWatchService();
+                    
+                    directory.toPath().register(directoryWatcher,
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE,
+                        StandardWatchEventKinds.ENTRY_MODIFY);
+
+                    if (directoryWatcherThread != null) {
+                        directoryWatcherThread.finish();
+                    }
+                    directoryWatcherThread = new DirectoryWatcherThread(directoryWatcher, window.mainTable);
+                    directoryWatcherThread.start();
+                } catch (IOException e) {
+                    return;
+                }
+            }
+        };
+
+        window.mainTable.registerDirectoryListener(directoryListener);
+        directoryListener.onDirectoryChanged(window.mainTable.getdir());
+
+        window.directoryFieldActionListener = new DirectoryFieldActionListener(directoryField);
+        directoryField.addActionListener(window.directoryFieldActionListener);
     }
 
     public abstract class AbstractMultipleActionListener implements ActionListener, KeyListener {}
@@ -44,8 +92,9 @@ public class WindowActions
         @Override
         public void keyPressed(KeyEvent e)
         {
-            if (e.getKeyCode() == KeyEvent.VK_ENTER)
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                 action();
+            }
         }
 
         @Override
@@ -55,14 +104,14 @@ public class WindowActions
         public void keyTyped(KeyEvent arg) {}
     }
 
-    private final class TrashActionListener extends MultipleActionListener
+    private final class DeleteActionListener extends MultipleActionListener
     {
         @Override
         protected void action()
         {
-            File file = window.mainTable.getSelectedFile();
-            if (file != null) {
-                if (FileManager.moveToTrash(file)) {
+            List<File> files = window.mainTable.getSelectedFiles();
+            if (files.size() > 0) {
+                if (FileManager.moveToTrash(files)) {
                     window.mainTable.updateContents();
                 } else {
                     Object[] options = {
@@ -71,8 +120,7 @@ public class WindowActions
                     };
 
                     String prompt = Resources.getString("LABEL_TRASH_FAILED")
-                        + " " + Resources.getString("LABEL_QUESTION_DELETE_START")
-                        + "'" + file.getName() + "'?";
+                        + " " + Resources.getString("LABEL_QUESTION_DELETE");
 
                     int dialogResult = JOptionPane.showOptionDialog(
                         window,
@@ -86,7 +134,7 @@ public class WindowActions
                     );
 
                     if (dialogResult == JOptionPane.YES_OPTION) {
-                        if (FileManager.delete(file)) {
+                        if (FileManager.delete(files)) {
                             window.mainTable.updateContents();
                         }
                     }
@@ -156,13 +204,51 @@ public class WindowActions
         }
 
         @Override
-        public void actionPerformed(ActionEvent arg0) {
+        public void actionPerformed(ActionEvent event) {
             File file = new File(directoryField.getText());
             if (file.isDirectory()) {
                 window.mainTable.chdir(file);
             } else {
                 window.setDirectoryFieldContents(directoryField, window.mainTable.getdir());
             }
+        }
+    }
+
+    private final class DirectoryWatcherThread extends Thread
+    {
+        private WatchService service;
+        private FileTable table;
+        private boolean isFinished;
+
+        DirectoryWatcherThread(WatchService service, FileTable table)
+        {
+            this.service = service;
+            this.table = table;
+            this.isFinished = false;
+        }
+
+        @Override
+        public void run()
+        {
+            try {
+                WatchKey key;
+                while ((key = service.take()) != null && !isFinished) {
+                    Iterator<WatchEvent<?>> eventsIterator = key.pollEvents().iterator();
+                    while (eventsIterator.hasNext()) {
+                        table.updateContents();
+                        eventsIterator.next();
+                    }
+
+                    key.reset();
+                }
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
+
+        public void finish()
+        {
+            this.isFinished = true;
         }
     }
 }
