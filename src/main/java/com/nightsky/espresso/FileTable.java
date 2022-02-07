@@ -1,8 +1,10 @@
 package com.nightsky.espresso;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,12 +13,16 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JTable;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import com.nightsky.espresso.FileManager.FileManagerAttribute;
 import com.nightsky.espresso.FileManager.FileManagerObject;
 
-public class FileTable extends JTable {
+public class FileTable extends JTable implements MouseListener, KeyListener {
+    private Window window;
+
     private FileTableModel model;
     private File directory;
     private List<FileManagerObject> contents;
@@ -27,8 +33,10 @@ public class FileTable extends JTable {
 
     private FileTableDirectoryListener directoryListener;
 
-    FileTable()
+    FileTable(Window window)
     {
+        this.window = window;
+
         fileManagerAttributes = new ArrayList<FileManagerAttribute>(List.of(
             FileManagerAttribute.filename,
             FileManagerAttribute.size,
@@ -45,13 +53,20 @@ public class FileTable extends JTable {
 
         model = new FileTableModel(tableAttributes.toArray(new String[0]));
         setModel(model);
-        addMouseListener(new DoubleClickListener(this));
+        addListeners();
     }
 
-    FileTable(File directory)
+    FileTable(Window window, File directory)
     {
-        this();
+        this(window);
         chdir(directory);
+    }
+
+    private void addListeners()
+    {
+        addMouseListener(this);
+        addKeyListener(this);
+        getSelectionModel().addListSelectionListener(new FileSelectionListener());
     }
 
     public File getdir()
@@ -117,6 +132,11 @@ public class FileTable extends JTable {
         return null;
     }
 
+    public File getSelectedFile()
+    {
+        return getFileAt(getSelectedRow());
+    }
+
     @Override
     public boolean editCellAt(int row, int column, java.util.EventObject event) {
         return false;
@@ -175,30 +195,6 @@ public class FileTable extends JTable {
         }
     }
 
-    private class DoubleClickListener extends MouseAdapter
-    {
-        private FileTable table;
-
-        DoubleClickListener(FileTable table)
-        {
-            super();
-            this.table = table;
-        }
-
-        @Override
-        public void mousePressed(MouseEvent event)
-        {
-            Point point = event.getPoint();
-            int row = table.rowAtPoint(point);
-            if (event.getClickCount() % 2 == 0 && row != -1) {
-                File file = table.getFileAt(row);
-                if (file.isDirectory()) {
-                    table.chdir(file);
-                }
-            }
-        }
-    }
-
     public void registerDirectoryListener(FileTableDirectoryListener listener)
     {
         directoryListener = listener;
@@ -208,4 +204,59 @@ public class FileTable extends JTable {
     {
         public void onDirectoryChanged(File directory);
     }
+
+    private class FileSelectionListener implements ListSelectionListener
+    {
+        @Override
+        public void valueChanged(ListSelectionEvent event)
+        {
+            window.menuBar.trashItem.setEnabled(getSelectedRow() != -1);
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent event)
+    {
+        Point point = event.getPoint();
+        int row = rowAtPoint(point);
+        if (event.getClickCount() % 2 == 0 && row != -1) {
+            File file = getFileAt(row);
+            if (file.isDirectory()) {
+                chdir(file);
+            }
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent event) {};
+
+    @Override
+    public void mouseEntered(MouseEvent event) {};
+
+    @Override
+    public void mouseExited(MouseEvent event) {};
+
+    @Override
+    public void mouseReleased(MouseEvent event) {};
+
+    @Override
+    public void keyPressed(KeyEvent event) {
+        switch (event.getKeyCode()) {
+            case KeyEvent.VK_ENTER:
+                int row = getSelectedRow();
+                if (row != -1) {
+                    File file = getFileAt(row);
+                    if (file.isDirectory()) {
+                        chdir(file);
+                    }
+                }
+                break;
+        }
+    };
+
+    @Override
+    public void keyReleased(KeyEvent event) {};
+
+    @Override
+    public void keyTyped(KeyEvent event) {};
 }

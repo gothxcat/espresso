@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 public class WindowActions
@@ -56,7 +57,42 @@ public class WindowActions
 
     private final class TrashActionListener extends MultipleActionListener
     {
+        @Override
+        protected void action()
+        {
+            File file = window.mainTable.getSelectedFile();
+            if (file != null) {
+                if (FileManager.moveToTrash(file)) {
+                    window.mainTable.updateContents();
+                } else {
+                    Object[] options = {
+                        Resources.getString("OPTION_CANCEL"),
+                        Resources.getString("OPTION_DELETE")
+                    };
 
+                    String prompt = Resources.getString("LABEL_TRASH_FAILED")
+                        + " " + Resources.getString("LABEL_QUESTION_DELETE_START")
+                        + "'" + file.getName() + "'?";
+
+                    int dialogResult = JOptionPane.showOptionDialog(
+                        window,
+                        prompt,
+                        Resources.getString("LABEL_DELETE"),
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        options,
+                        options[1]
+                    );
+
+                    if (dialogResult == JOptionPane.YES_OPTION) {
+                        if (FileManager.delete(file)) {
+                            window.mainTable.updateContents();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private final class CloseActionListener extends MultipleActionListener

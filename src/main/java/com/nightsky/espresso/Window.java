@@ -81,7 +81,7 @@ public class Window extends JFrame
     {
         /* Table */
         detailsLabel = new JLabel(FileManager.getDetails(startDirectory));
-        mainTable = new FileTable(startDirectory);
+        mainTable = new FileTable(this, startDirectory);
         JScrollPane tableScrollPane = new JScrollPane(mainTable);
 
 
