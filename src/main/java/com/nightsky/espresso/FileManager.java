@@ -24,10 +24,10 @@ import java.util.Set;
 import com.sun.jna.platform.FileUtils;
 
 public class FileManager {
-    public static List<FileManagerObject> listDirectory(File directory, List<FileManagerAttribute> attributes)
-    {
+    public static List<FileManagerObject> listDirectory(File directory, List<FileManagerAttribute> attributes) {
         List<FileManagerObject> fileList = new ArrayList<FileManagerObject>();
         String[] filenames = directory.list();
+
         for (String filename : filenames) {
             File file = Paths.get(directory.getPath(), filename).toAbsolutePath().toFile();
             FileManagerObject fileObject = new FileManagerObject(file, attributes.toArray(new FileManagerAttribute[0]));
@@ -42,18 +42,18 @@ public class FileManager {
 
                     case size:
                         fileObject.setAttribute(FileManagerAttribute.size,
-                            formatSize(file.length())
+                            FileManager.formatSize(file.length())
                         );
                         break;
 
                     case type:
                         fileObject.setAttribute(FileManagerAttribute.type,
-                            getFileTypeString(file)
+                        FileManager.getFileTypeString(file)
                         );
                         break;
 
                     case dateModified:
-                        ZonedDateTime zoneDateModified = zoneDateFromEpoch(file.lastModified());
+                        ZonedDateTime zoneDateModified = FileManager.zoneDateFromEpoch(file.lastModified());
                         fileObject.setAttribute(FileManagerAttribute.dateModified,
                             zoneDateModified.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT))
                         );
@@ -67,27 +67,26 @@ public class FileManager {
         return fileList;
     }
 
-    public static String formatSize(long size)
-    {
-        StringBuilder string = new StringBuilder(Long.toString(size));
-        for (int i = string.length() - 3; i > 0; i -= 3)
-            string.insert(i, ',');
+    public static String formatSize(long size) {
+        StringBuilder stringBuilder = new StringBuilder(Long.toString(size));
+        for (int i = stringBuilder.length() - 3; i > 0; i -= 3) {
+            stringBuilder.insert(i, ',');
+        }
         
-        return string.toString();
+        return stringBuilder.toString();
     }
 
-    public static ZonedDateTime zoneDateFromEpoch(long msSinceEpoch)
-    {
+    public static ZonedDateTime zoneDateFromEpoch(long msSinceEpoch) {
         return Instant.ofEpochMilli(msSinceEpoch).atZone(Platform.zoneId);
     }
 
-    private static String getFileTypeString(File file)
-    {
-        return file.isDirectory() ? Resources.getString("TABLE_CELL_DIRECTORY") : Resources.getString("TABLE_CELL_FILE");
+    private static String getFileTypeString(File file) {
+        return file.isDirectory()
+            ? Resources.getString("TABLE_CELL_DIRECTORY")
+            : Resources.getString("TABLE_CELL_FILE");
     }
 
-    public static File newdir(File currentDirectory, String filename)
-    {
+    public static File newdir(File currentDirectory, String filename) {
         File newDirectory = Paths.get(currentDirectory.getPath(), filename).toAbsolutePath().toFile();
         if (newDirectory.mkdir()) {
             return newDirectory;
@@ -96,8 +95,7 @@ public class FileManager {
         }
     }
 
-    public static String getDetails(File directory)
-    {
+    public static String getDetailsString(File directory) {
         long size = 0;
         int directoryCount = 0;
         int fileCount = 0;
@@ -126,7 +124,7 @@ public class FileManager {
 
         String sizeString = "";
         if (size > 0) {
-            sizeString = formatSize(size) + " " + Resources.getString("LABEL_BYTES");
+            sizeString = FileManager.formatSize(size) + " " + Resources.getString("LABEL_BYTES");
         }
 
         String details;
@@ -143,22 +141,20 @@ public class FileManager {
         return details;
     }
 
-    public static boolean moveToTrash(File file)
-    {
+    public static boolean moveToTrash(File file) {
         FileUtils fileUtils = FileUtils.getInstance();
         if (fileUtils.hasTrash()) {
-            return moveToTrashJNA(fileUtils, file);
+            return FileManager.moveToTrashJNA(fileUtils, file);
         } else if (Platform.isUnix()) {
-            return moveToTrashUnix(file);
+            return FileManager.moveToTrashUnix(file);
         } else {
             return false;
         }
     }
 
-    public static boolean moveToTrash(List<File> files)
-    {
+    public static boolean moveToTrash(List<File> files) {
         for (File file : files) {
-            if (!moveToTrash(file)) {
+            if (!FileManager.moveToTrash(file)) {
                 return false;
             }
         }
@@ -166,8 +162,7 @@ public class FileManager {
         return true;
     }
 
-    private static boolean moveToTrashJNA(FileUtils fileUtils, File file)
-    {
+    private static boolean moveToTrashJNA(FileUtils fileUtils, File file) {
         try {
             fileUtils.moveToTrash(new File[] { file });
             return true;
@@ -176,9 +171,8 @@ public class FileManager {
         }
     }
 
-    private static boolean moveToTrashUnix(File file)
-    {
-        Path trashPath = Paths.get(getAbsoluteTrashPathUnix());
+    private static boolean moveToTrashUnix(File file) {
+        Path trashPath = Paths.get(FileManager.getAbsoluteTrashPathUnix());
         File trashDirectory = new File(trashPath.toString());
         if (!trashDirectory.exists()) {
             if (!trashDirectory.mkdirs()) {
@@ -203,14 +197,18 @@ public class FileManager {
 
         Path trashFilesPath = Paths.get(trashPath.toString(), "files");
         Path filePath = file.toPath().toAbsolutePath();
-        Path newPath = Paths.get(trashFilesPath.toString(), filePath.getFileName().toString()).toAbsolutePath();
+
+        Path newPath = Paths.get(trashFilesPath.toString(),
+            filePath.getFileName().toString()).toAbsolutePath();
+        
         if (Files.exists(newPath)) {
             int count = 2;
             while (Files.exists(Paths.get(newPath.toString(), "." + Integer.toString(count)).toAbsolutePath())) {
                 count++;
             }
 
-            newPath = Paths.get(trashPath.toString(), "files", filePath.getFileName().toString() + "." + Integer.toString(count)).toAbsolutePath();
+            newPath = Paths.get(trashPath.toString(), "files",
+                filePath.getFileName().toString() + "." + Integer.toString(count)).toAbsolutePath();
         } else {
             File trashFiles = trashFilesPath.toFile();
             if (!trashFiles.exists()) {
@@ -227,7 +225,9 @@ public class FileManager {
             }
         }
 
-        Path infoFilePath = Paths.get(trashInfoPath.toString(), newPath.getFileName().toString() + ".trashinfo").toAbsolutePath();
+        Path infoFilePath = Paths.get(trashInfoPath.toString(),
+            newPath.getFileName().toString() + ".trashinfo").toAbsolutePath();
+
         Set<PosixFilePermission> infoFilePermissions = PosixFilePermissions.fromString("rw-------");
         FileAttribute<?> permissions = PosixFilePermissions.asFileAttribute(infoFilePermissions);
 
@@ -237,7 +237,8 @@ public class FileManager {
 
             BufferedWriter writer = new BufferedWriter(new FileWriter(infoFilePath.toFile(), false));
             String fileString = escape(filePath.toString());
-            String dateString = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss").withZone(Platform.zoneId).format(Instant.now());
+            String dateString = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'hh:mm:ss")
+                .withZone(Platform.zoneId).format(Instant.now());
 
             writer.write("[Trash Info]\n");
             writer.write("Path=" + fileString + "\n");
@@ -261,25 +262,22 @@ public class FileManager {
         return true;
     }
 
-    public static String getTrashFilesPath()
-    {
+    public static String getTrashFilesPath() {
         FileUtils fileUtils = FileUtils.getInstance();
         if (fileUtils.hasTrash()) {
             return "$RECYCLE.BIN";
         } else if (Platform.isUnix()) {
-            return getAbsoluteTrashFilesPathUnix();
+            return FileManager.getAbsoluteTrashFilesPathUnix();
         } else {
             return null;
         }
     }
 
-    public static String getAbsoluteTrashFilesPathUnix()
-    {
-        return Paths.get(getAbsoluteTrashPathUnix(), "files").toAbsolutePath().toString();
+    public static String getAbsoluteTrashFilesPathUnix() {
+        return Paths.get(FileManager.getAbsoluteTrashPathUnix(), "files").toAbsolutePath().toString();
     }
 
-    public static String getAbsoluteTrashPathUnix()
-    {
+    public static String getAbsoluteTrashPathUnix() {
         String dataHome = System.getenv("XDG_DATA_HOME");
         if (dataHome.length() == 0) {
             String home = System.getProperty("user.home");
@@ -292,8 +290,7 @@ public class FileManager {
         return Paths.get(dataHome, "Trash").toAbsolutePath().toString();
     }
 
-    public static boolean delete(File file)
-    {
+    public static boolean delete(File file) {
         try {
             Files.delete(file.toPath().toAbsolutePath());
             return true;
@@ -302,10 +299,9 @@ public class FileManager {
         }
     }
 
-    public static boolean delete(List<File> files)
-    {
+    public static boolean delete(List<File> files) {
         for (File file : files) {
-            if (!delete(file)) {
+            if (!FileManager.delete(file)) {
                 return false;
             }
         }
@@ -313,7 +309,7 @@ public class FileManager {
         return true;
     }
 
-    public static String escape(String s){
+    public static String escape(String s) {
         return s.replace("\\", "\\\\")
                 .replace("\t", "\\t")
                 .replace("\b", "\\b")
@@ -323,42 +319,32 @@ public class FileManager {
                 .replace("\'", "\\'");
     }
 
-    public static enum FileManagerAttribute
-    {
+    public static enum FileManagerAttribute {
         filename,
         size,
         type,
         dateModified
     }
 
-    public static class FileManagerObject
-    {
+    public static class FileManagerObject {
         File file;
         Map<FileManagerAttribute,String> attributes;
         FileManagerAttribute[] attributeOrder;
 
-        FileManagerObject(File file, FileManagerAttribute[] attributeOrder)
-        {
+        public FileManagerObject(File file, FileManagerAttribute[] attributeOrder) {
             this.file = file;
-            this.attributes = new HashMap<FileManagerAttribute,String>();
-            this.setAttributeOrder(attributeOrder);
-        }
-        
-        public void setAttributeOrder(FileManagerAttribute[] attributeOrder)
-        {
             this.attributeOrder = attributeOrder;
+            this.attributes = new HashMap<FileManagerAttribute,String>();
         }
 
-        public void setAttribute(FileManagerAttribute attribute, String data)
-        {
-            attributes.put(attribute, data);
+        public void setAttribute(FileManagerAttribute attribute, String data) {
+            this.attributes.put(attribute, data);
         }
 
-        public String[] getAttributeStrings()
-        {
+        public String[] getAttributeStrings() {
             List<String> attributeList = new ArrayList<String>();
             for (FileManagerAttribute attribute : attributeOrder) {
-                attributeList.add(attributes.get(attribute));
+                attributeList.add(this.attributes.get(attribute));
             }
 
             return attributeList.toArray(new String[0]);

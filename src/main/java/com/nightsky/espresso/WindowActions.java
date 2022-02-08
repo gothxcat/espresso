@@ -20,80 +20,82 @@ import javax.swing.JTextField;
 
 import com.nightsky.espresso.FileTable.FileTableDirectoryListener;
 
-public class WindowActions
-{
+public class WindowActions {
     private Window window;
-    private DirectoryWatcherThread directoryWatcherThread;
 
-    WindowActions(Window window)
-    {
+    public WindowActions(Window window) {
         this.window = window;
         addListeners();
     }
 
-    private void addListeners()
-    {
-        window.closeActionListener = new CloseActionListener();
-        window.DeleteActionListener = new DeleteActionListener();
-        window.upActionListener = new UpActionListener();
-        window.newDirectoryActionListener = new NewDirectoryActionListener();
-        window.reloadActionListener = new ReloadActionListener();
-        window.toggleMenuActionListener = new ToggleMenuActionListener();
+    private void addListeners() {
+        this.window.closeActionListener = new CloseActionListener();
+        this.window.DeleteActionListener = new DeleteActionListener();
+        this.window.upActionListener = new UpActionListener();
+        this.window.newDirectoryActionListener = new NewDirectoryActionListener();
+        this.window.reloadActionListener = new ReloadActionListener();
+        this.window.toggleMenuActionListener = new ToggleMenuActionListener();
     }
 
-    public void addDirectoryListeners(FileTable table, JTextField directoryField, JLabel detailsLabel)
-    {
-        FileTableDirectoryListener directoryListener = new FileTableDirectoryListener(){
-            @Override
-            public void onDirectoryChanged(File directory)
-            {
-                detailsLabel.setText(FileManager.getDetails(directory));
-                window.setDirectoryFieldContents(directoryField, directory);
-                window.setTrashStatus(directory);
+    public void addDirectoryListeners(FileTable table, JTextField directoryField, JLabel detailsLabel) {
+        DirectoryListener directoryListener = new DirectoryListener(this.window, directoryField, detailsLabel);
 
-                try {
-                    WatchService directoryWatcher = FileSystems.getDefault().newWatchService();
-                    
-                    directory.toPath().register(directoryWatcher,
-                        StandardWatchEventKinds.ENTRY_CREATE,
-                        StandardWatchEventKinds.ENTRY_DELETE,
-                        StandardWatchEventKinds.ENTRY_MODIFY);
+        this.window.mainTable.registerDirectoryListener(directoryListener);
+        directoryListener.onDirectoryChanged(this.window.mainTable.getdir());
 
-                    if (directoryWatcherThread != null) {
-                        directoryWatcherThread.finish();
-                    }
-                    directoryWatcherThread = new DirectoryWatcherThread(directoryWatcher, window.mainTable);
-                    directoryWatcherThread.start();
-                } catch (IOException e) {
-                    return;
-                }
-            }
+        this.window.directoryFieldActionListener = new DirectoryFieldActionListener(directoryField);
+        directoryField.addActionListener(this.window.directoryFieldActionListener);
+    }
+
+    private class DirectoryListener implements FileTableDirectoryListener {
+        private JTextField directoryField;
+        private JLabel detailsLabel;
+        private DirectoryWatcherThread directoryWatcherThread;
+
+        public DirectoryListener(Window window, JTextField directoryField, JLabel detailsLabel) {
+            this.directoryField = directoryField;
+            this.detailsLabel = detailsLabel;
         };
 
-        window.mainTable.registerDirectoryListener(directoryListener);
-        directoryListener.onDirectoryChanged(window.mainTable.getdir());
+        @Override
+        public void onDirectoryChanged(File directory)
+        {
+            detailsLabel.setText(FileManager.getDetailsString(directory));
+            window.setDirectoryFieldContents(this.directoryField, directory);
+            window.setTrashStatus(directory);
 
-        window.directoryFieldActionListener = new DirectoryFieldActionListener(directoryField);
-        directoryField.addActionListener(window.directoryFieldActionListener);
+            try {
+                WatchService directoryWatcher = FileSystems.getDefault().newWatchService();
+                
+                directory.toPath().register(directoryWatcher,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_DELETE,
+                    StandardWatchEventKinds.ENTRY_MODIFY);
+
+                if (directoryWatcherThread != null) {
+                    directoryWatcherThread.finish();
+                }
+
+                directoryWatcherThread = new DirectoryWatcherThread(directoryWatcher, window.mainTable);
+                directoryWatcherThread.start();
+            } catch (IOException e) {
+                return;
+            }
+        }
     }
 
-    public abstract class AbstractMultipleActionListener implements ActionListener, KeyListener {}
-
-    private class MultipleActionListener extends AbstractMultipleActionListener
-    {
-        protected void action() {}
+    public abstract class ActionKeyListener implements ActionListener, KeyListener {
+        protected abstract void action();
 
         @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            action();
+        public void actionPerformed(ActionEvent e) {
+            this.action();
         }
 
         @Override
-        public void keyPressed(KeyEvent e)
-        {
+        public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                action();
+                this.action();
             }
         }
 
@@ -104,11 +106,9 @@ public class WindowActions
         public void keyTyped(KeyEvent arg) {}
     }
 
-    private final class DeleteActionListener extends MultipleActionListener
-    {
+    private final class DeleteActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             List<File> files = window.mainTable.getSelectedFiles();
             if (files.size() > 0) {
                 if (FileManager.moveToTrash(files)) {
@@ -120,12 +120,12 @@ public class WindowActions
                     };
 
                     String prompt = Resources.getString("LABEL_TRASH_FAILED")
-                        + " " + Resources.getString("LABEL_QUESTION_DELETE");
+                        + " " + Resources.getString("LABEL_PROMPT_DELETE");
 
                     int dialogResult = JOptionPane.showOptionDialog(
                         window,
                         prompt,
-                        Resources.getString("LABEL_DELETE"),
+                        Resources.getString("LABEL_INFO_DELETE"),
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.PLAIN_MESSAGE,
                         null,
@@ -143,47 +143,37 @@ public class WindowActions
         }
     }
 
-    private final class CloseActionListener extends MultipleActionListener
-    {
+    private final class CloseActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             window.dispose();
         }
     }
 
-    private final class UpActionListener extends MultipleActionListener
-    {
+    private final class UpActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             window.mainTable.updir();
         }
     }
 
-    private final class NewDirectoryActionListener extends MultipleActionListener
-    {
+    private final class NewDirectoryActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             window.newdir();
         }
     }
 
-    private final class ReloadActionListener extends MultipleActionListener
-    {
+    private final class ReloadActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             window.mainTable.updateContents();
         }
     }
 
-    private final class ToggleMenuActionListener extends MultipleActionListener
-    {
+    private final class ToggleMenuActionListener extends ActionKeyListener {
         @Override
-        protected void action()
-        {
+        protected void action() {
             if (window.menuBar.isVisible()) {
                 window.menuBar.setVisible(false);
                 window.mainPanel.requestFocus();
@@ -194,12 +184,10 @@ public class WindowActions
         }
     }
 
-    public final class DirectoryFieldActionListener implements ActionListener
-    {
+    public final class DirectoryFieldActionListener implements ActionListener {
         private JTextField directoryField;
 
-        DirectoryFieldActionListener(JTextField directoryField)
-        {
+        DirectoryFieldActionListener(JTextField directoryField) {
             this.directoryField = directoryField;
         }
 
@@ -214,28 +202,25 @@ public class WindowActions
         }
     }
 
-    private final class DirectoryWatcherThread extends Thread
-    {
+    private final class DirectoryWatcherThread extends Thread {
         private WatchService service;
         private FileTable table;
         private boolean isFinished;
 
-        DirectoryWatcherThread(WatchService service, FileTable table)
-        {
+        DirectoryWatcherThread(WatchService service, FileTable table) {
             this.service = service;
             this.table = table;
             this.isFinished = false;
         }
 
         @Override
-        public void run()
-        {
+        public void run() {
             try {
                 WatchKey key;
-                while ((key = service.take()) != null && !isFinished) {
+                while ((key = this.service.take()) != null && !this.isFinished) {
                     Iterator<WatchEvent<?>> eventsIterator = key.pollEvents().iterator();
                     while (eventsIterator.hasNext()) {
-                        table.updateContents();
+                        this.table.updateContents();
                         eventsIterator.next();
                     }
 
@@ -246,8 +231,7 @@ public class WindowActions
             }
         }
 
-        public void finish()
-        {
+        public void finish() {
             this.isFinished = true;
         }
     }
