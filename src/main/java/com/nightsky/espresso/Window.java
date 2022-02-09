@@ -111,14 +111,12 @@ public class Window extends JFrame {
         this.mainPanel.add(upButton, constraints);
 
         /* Directory field */
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridy = 0;
         constraints.gridx = 1;
         constraints.weightx = 0.8;
         this.mainPanel.add(directoryField, constraints);
 
         /* Reload button */
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridy = 0;
         constraints.gridx = 2;
         constraints.weightx = 0;

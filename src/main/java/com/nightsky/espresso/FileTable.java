@@ -139,7 +139,7 @@ public class FileTable extends JTable implements TableModel, MouseListener, KeyL
     }
 
     @Override
-    public boolean editCellAt(int row, int column, java.util.EventObject event) {
+    public boolean isCellEditable(int row, int col) {
         return false;
     }
 
