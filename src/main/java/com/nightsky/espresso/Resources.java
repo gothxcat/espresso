@@ -16,30 +16,30 @@ public class Resources {
     private static String stringsBundleIdentifier;
 
     public static void load() {
-        Resources.stringsBundleIdentifier = Resources.class.getPackageName() + "." + stringsBundleClassName;
+        stringsBundleIdentifier = Resources.class.getPackageName() + "." + stringsBundleClassName;
         
         try {
             try {
-                Resources.stringsBundle = ResourceBundle.getBundle(
-                    Resources.stringsBundleIdentifier, Locale.getDefault());
+                stringsBundle = ResourceBundle.getBundle(
+                    stringsBundleIdentifier, Locale.getDefault());
             } catch (Exception e) {
-                Resources.stringsBundle = ResourceBundle.getBundle(
-                    Resources.stringsBundleIdentifier, Resources.fallbackLocale);
+                stringsBundle = ResourceBundle.getBundle(
+                    stringsBundleIdentifier, fallbackLocale);
             }
             
-            Enumeration<String> keys = Resources.stringsBundle.getKeys();
+            Enumeration<String> keys = stringsBundle.getKeys();
             while (keys.hasMoreElements()) {
                 String key = keys.nextElement();
-                Resources.strings.put(key, Resources.stringsBundle.getString(key));
+                strings.put(key, stringsBundle.getString(key));
             }
         } catch (Exception e) {
-            System.out.println("Unable to load string resources from bundle " + Resources.stringsBundleIdentifier + ":");
+            System.out.println("Unable to load string resources from bundle " + stringsBundleIdentifier + ":");
             System.out.println(e.getLocalizedMessage());
             System.exit(1);
         }
     }
 
     public static String getString(String key) {
-        return Resources.strings.get(key);
+        return strings.get(key);
     }
 }

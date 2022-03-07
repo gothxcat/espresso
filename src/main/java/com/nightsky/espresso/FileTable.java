@@ -15,14 +15,15 @@ import java.util.List;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
+import javax.swing.table.AbstractTableModel;
 
 import com.nightsky.espresso.FileManager.FileManagerAttribute;
 import com.nightsky.espresso.FileManager.FileManagerObject;
 
-public class FileTable extends JTable implements TableModel, MouseListener, KeyListener {
+public class FileTable extends JTable implements MouseListener, KeyListener {
     private Window window;
+
+    private FileTableModel model;
 
     private File directory;
     private List<FileManagerObject> contents;
@@ -31,74 +32,74 @@ public class FileTable extends JTable implements TableModel, MouseListener, KeyL
     private FileManagerAttribute sortAttribute;
     private List<String> tableAttributes;
 
-    private FileTableDirectoryListener directoryListener;
-
-    private String[] modelColumnNames;
-    private Object[][] modelData;
+    private List<FileTableDirectoryListener> directoryChangedListeners;
 
     public FileTable(Window window) {
         this.window = window;
 
-        this.fileManagerAttributes = new ArrayList<FileManagerAttribute>(List.of(
+        fileManagerAttributes = new ArrayList<FileManagerAttribute>(List.of(
             FileManagerAttribute.filename,
             FileManagerAttribute.size,
             FileManagerAttribute.type,
             FileManagerAttribute.dateModified
         ));
 
-        this.sortAttribute = FileManagerAttribute.filename;
+        sortAttribute = FileManagerAttribute.filename;
 
-        this.tableAttributes = new ArrayList<String>(List.of(
+        tableAttributes = new ArrayList<String>(List.of(
             Resources.getString("TABLE_CELL_NAME"),
             Resources.getString("TABLE_CELL_SIZE"),
             Resources.getString("TABLE_CELL_TYPE"),
             Resources.getString("TABLE_CELL_DATEMODIFIED")
         ));
 
-        this.updateModelColumnsFromList(this.tableAttributes);
-        this.setModel(this);
-        this.addListeners();
+        directoryChangedListeners = new ArrayList<>();
+
+        model = new FileTableModel();
+        model.updateColumnsFromList(tableAttributes);
+        setModel(model);
+        addListeners();
     }
 
     public FileTable(Window window, File directory) {
         this(window);
-        this.chdir(directory);
+        chdir(directory);
     }
 
     private void addListeners() {
-        this.addMouseListener(this);
-        this.addKeyListener(this);
-        this.getSelectionModel().addListSelectionListener(new FileSelectionListener());
+        addMouseListener(this);
+        addKeyListener(this);
+        getSelectionModel().addListSelectionListener(new FileSelectionListener());
     }
 
-    public File getdir() {
-        return this.directory;
+    public File getcwd() {
+        return directory;
     }
 
     public void chdir(File newDirectory) {
         try {
-            this.directory = new File(newDirectory.getCanonicalPath());
+            directory = new File(newDirectory.getCanonicalPath());
         } catch (IOException e) {
             return;
         }
 
-        this.updateContents();
+        updateContents();
     }
 
     public void updir() {
-        if (this.directory != null) {
-            File parent = this.directory.getParentFile();
+        if (directory != null) {
+            File parent = directory.getParentFile();
             if (parent != null)
-            this.chdir(parent);
+            chdir(parent);
         }
     }
 
     public void updateContents() {
-        if (this.directory != null) {
-            this.contents = FileManager.listDirectory(this.directory, this.fileManagerAttributes);
-            int sortColumn = this.fileManagerAttributes.indexOf(this.sortAttribute);
+        if (directory != null) {
+            contents = FileManager.listDirectory(directory, fileManagerAttributes);
+            int sortColumn = fileManagerAttributes.indexOf(sortAttribute);
 
-            Collections.sort(this.contents, new Comparator<FileManagerObject>() {
+            Collections.sort(contents, new Comparator<FileManagerObject>() {
                 public int compare(FileManagerObject a, FileManagerObject b) {
                     String[] attributesA = a.getAttributeStrings();
                     String[] attributesB = b.getAttributeStrings();
@@ -110,20 +111,18 @@ public class FileTable extends JTable implements TableModel, MouseListener, KeyL
                 }
             });
 
-            this.updateModelDataFromList(this.contents);
+            clearSelection();
+            model.updateDataFromList(contents);
 
-            if (this.directoryListener != null) {
-                this.directoryListener.onDirectoryChanged(this.directory);
+            for (FileTableDirectoryListener listener : directoryChangedListeners) {
+                listener.onDirectoryChanged(directory);
             }
         }
-
-        this.clearSelection();
-        this.revalidate();
     }
 
     public File getFileAt(int row) {
-        if (row > -1 && row < this.contents.size()) {
-            return this.contents.get(row).file;
+        if (row > -1 && row < contents.size()) {
+            return contents.get(row).file;
         }
 
         return null;
@@ -131,72 +130,19 @@ public class FileTable extends JTable implements TableModel, MouseListener, KeyL
 
     public List<File> getSelectedFiles() {
         List<File> files = new ArrayList<>();
-        for (int row : this.getSelectedRows()) {
+        for (int row : getSelectedRows()) {
             files.add(getFileAt(row));
         }
 
         return files;
     }
 
-    @Override
-    public boolean isCellEditable(int row, int col) {
-        return false;
+    public void addDirectoryChangedListener(FileTableDirectoryListener listener) {
+        directoryChangedListeners.add(listener);
     }
 
-    private void updateModelColumns(String[] columnNames) {
-        this.modelColumnNames = columnNames;
-    }
-
-    private void updateModelData(Object[][] data) {
-        this.modelData = data;
-    }
-
-    private void updateModelColumnsFromList(List<String> objects) {
-        this.updateModelColumns(objects.toArray(new String[0]));
-    }
-
-    private void updateModelDataFromList(List<FileManagerObject> objects) {
-        List<String[]> dataList = new ArrayList<String[]>();
-        for (FileManagerObject object : objects) {
-            dataList.add(object.getAttributeStrings());
-        }
-
-        this.updateModelData(dataList.toArray(new Object[0][]));
-    }
-
-    @Override
-    public int getColumnCount() {
-        return this.modelColumnNames.length;
-    }
-
-    @Override
-    public int getRowCount() {
-        return this.modelData.length;
-    }
-
-    @Override
-    public String getColumnName(int col) {
-        return this.modelColumnNames[col];
-    }
-
-    @Override
-    public Class<?> getColumnClass(int col) {
-        return Object.class;
-    }
-
-    @Override
-    public Object getValueAt(int row, int col) {
-        return this.modelData[row][col];
-    }
-
-    @Override
-    public void addTableModelListener(TableModelListener listener) {}
-
-    @Override
-    public void removeTableModelListener(TableModelListener listener) {}
-
-    public void registerDirectoryListener(FileTableDirectoryListener listener) {
-        this.directoryListener = listener;
+    public void removeDirectoryChangedListener(FileTableDirectoryListener listener) {
+        directoryChangedListeners.remove(listener);
     }
 
     public interface FileTableDirectoryListener {
@@ -210,14 +156,72 @@ public class FileTable extends JTable implements TableModel, MouseListener, KeyL
         }
     }
 
+    private class FileTableModel extends AbstractTableModel {
+        private String[] columnNames;
+        private Object[][] data;
+
+        private void updateColumns(String[] columnNames) {
+            this.columnNames = columnNames;
+            fireTableStructureChanged();
+        }
+    
+        private void updateData(Object[][] data) {
+            this.data = data;
+            fireTableDataChanged();
+        }
+
+        private void updateColumnsFromList(List<String> objects) {
+            updateColumns(objects.toArray(new String[0]));
+        }
+    
+        private void updateDataFromList(List<FileManagerObject> objects) {
+            List<String[]> dataList = new ArrayList<String[]>();
+            for (FileManagerObject object : objects) {
+                dataList.add(object.getAttributeStrings());
+            }
+    
+            updateData(dataList.toArray(new Object[0][]));
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+    
+        @Override
+        public int getRowCount() {
+            return data.length;
+        }
+
+        @Override
+        public String getColumnName(int col) {
+            return columnNames[col];
+        }
+
+        @Override
+        public Class<?> getColumnClass(int col) {
+            return Object.class;
+        }
+
+        @Override
+        public Object getValueAt(int row, int col) {
+            return data[row][col];
+        }
+    }
+
+    @Override
+    public boolean isCellEditable(int row, int col) {
+        return false;
+    }
+
     @Override
     public void mousePressed(MouseEvent event) {
         Point point = event.getPoint();
-        int row = this.rowAtPoint(point);
+        int row = rowAtPoint(point);
         if (event.getClickCount() % 2 == 0 && row != -1) {
-            File file = this.getFileAt(row);
+            File file = getFileAt(row);
             if (file.isDirectory()) {
-                this.chdir(file);
+                chdir(file);
             }
         }
     }

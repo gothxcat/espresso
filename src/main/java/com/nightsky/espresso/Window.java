@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+// import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
@@ -21,6 +22,7 @@ import com.nightsky.espresso.WindowActions.ActionKeyListener;
 
 public class Window extends JFrame {
     protected JPanel mainPanel;
+    protected JPanel sidePanel;
     protected MenuBar menuBar;
     protected FileTable mainTable;
     protected JLabel detailsLabel;
@@ -31,28 +33,27 @@ public class Window extends JFrame {
     public ActionKeyListener upActionListener;
     public ActionKeyListener newDirectoryActionListener;
     public ActionKeyListener reloadActionListener;
-    public ActionKeyListener toggleMenuActionListener;
     public ActionListener directoryFieldActionListener;
 
     private File startDirectory;
 
     public Window() {
-        this.startDirectory = new File(".");
-        this.actions = new WindowActions(this);
+        startDirectory = Platform.userHomeDirectory;
+        actions = new WindowActions(this);
     }
 
     public void start() {
-        this.setAppearance();
+        setAppearance();
 
-        this.setJMenuBar(createMenuBar());
-        this.menuBar.trashItem.setEnabled(false);
+        setJMenuBar(createMenuBar());
+        menuBar.trashItem.setEnabled(false);
 
-        this.addComponents();
+        addComponents();
 
-        this.pack();
-        this.setTitle(Resources.getString("TITLE"));
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setVisible(true);
+        pack();
+        setTitle(Resources.getString("TITLE"));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
     }
 
     private void setAppearance() {
@@ -65,41 +66,67 @@ public class Window extends JFrame {
     }
 
     private JMenuBar createMenuBar() {
-        this.menuBar = new MenuBar(this);
-        this.menuBar.setVisible(true);
-        return this.menuBar;
+        menuBar = new MenuBar(this);
+        menuBar.setVisible(true);
+        return menuBar;
     }
 
     private void addComponents() {
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.insets = new Insets(4, 4, 4, 4);
+
+
         /* Table */
-        this.detailsLabel = new JLabel(FileManager.getDetailsString(this.startDirectory));
-        this.mainTable = new FileTable(this, this.startDirectory);
-        JScrollPane tableScrollPane = new JScrollPane(this.mainTable);
+        detailsLabel = new JLabel(FileManager.getDetailsString(startDirectory));
+        detailsLabel.setHorizontalAlignment(JLabel.RIGHT);
+        mainTable = new FileTable(this, startDirectory);
+        JScrollPane tableScrollPane = new JScrollPane(mainTable);
+
+        
+        /* Side panel */
+
+        // // TODO: directory tree
+        // sidePanel = new JPanel();
+        // sidePanel.setLayout(new GridBagLayout());
+        // constraints.fill = GridBagConstraints.BOTH;
+        // constraints.weighty = 1.0;
+        // constraints.weightx = 1.0;
+        // constraints.gridy = 0;
+        // constraints.gridx = 0;
+        // constraints.anchor = GridBagConstraints.PAGE_START;
+        // // sidePanel.add(directoryTree, constraints);
+        // JScrollPane sideScrollPane = new JScrollPane(sidePanel);
+
+        
+        // /* Split side/table panels */
+        // JSplitPane filePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, sideScrollPane, tableScrollPane);
+        // filePane.setDividerLocation(250);
+
+        JScrollPane filePane = tableScrollPane;
 
 
         /* Controls */
         JButton upButton = new JButton(Resources.getString("BUTTON_UP"));
-        upButton.addActionListener(this.upActionListener);
-        upButton.addKeyListener(this.upActionListener);
+        upButton.addActionListener(upActionListener);
+        upButton.addKeyListener(upActionListener);
 
         JTextField directoryField = new JTextField();
-        setDirectoryFieldContents(directoryField, this.startDirectory);
+        setDirectoryFieldContents(directoryField, startDirectory);
         directoryField.setCaretColor(Platform.caretColor);
 
         JButton reloadButton = new JButton(Resources.getString("BUTTON_RELOAD"));
-        reloadButton.addActionListener(this.reloadActionListener);
-        reloadButton.addKeyListener(this.reloadActionListener);
+        reloadButton.addActionListener(reloadActionListener);
+        reloadButton.addKeyListener(reloadActionListener);
 
 
         /* Listeners */
-        this.actions.addDirectoryListeners(this.mainTable, directoryField, this.detailsLabel);
+        actions.addDirectoryListeners(mainTable, directoryField, detailsLabel);
         
 
         /* Panel */
-        this.mainPanel = new JPanel(new GridBagLayout());
-        this.mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        GridBagConstraints constraints = new GridBagConstraints();
+        mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        constraints = new GridBagConstraints();
         constraints.insets = new Insets(4, 4, 4, 4);
         
         /* Up button */
@@ -108,37 +135,37 @@ public class Window extends JFrame {
         constraints.gridx = 0;
         constraints.gridwidth = 1;
         constraints.weightx = 0.0;
-        this.mainPanel.add(upButton, constraints);
+        mainPanel.add(upButton, constraints);
 
         /* Directory field */
         constraints.gridy = 0;
         constraints.gridx = 1;
         constraints.weightx = 0.8;
-        this.mainPanel.add(directoryField, constraints);
+        mainPanel.add(directoryField, constraints);
 
         /* Reload button */
         constraints.gridy = 0;
         constraints.gridx = 2;
         constraints.weightx = 0;
-        this.mainPanel.add(reloadButton, constraints);
+        mainPanel.add(reloadButton, constraints);
 
-        /* Table */
+        /* File pane */
         constraints.fill = GridBagConstraints.BOTH;
         constraints.gridy = 1;
         constraints.gridx = 0;
-        constraints.gridwidth = 3;
+        constraints.gridwidth = 4;
         constraints.weighty = 1.0;
-        this.mainPanel.add(tableScrollPane, constraints);
+        mainPanel.add(filePane, constraints);
 
         /* Details */
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridy = 2;
-        constraints.gridx = 0;
+        constraints.gridx = 1;
         constraints.gridwidth = 3;
         constraints.weighty = 0;
-        this.mainPanel.add(this.detailsLabel, constraints);
+        mainPanel.add(detailsLabel, constraints);
 
-        this.add(this.mainPanel);
+        add(mainPanel);
     }
 
     public void newdir() {
@@ -149,12 +176,12 @@ public class Window extends JFrame {
 
         if (result == OptionDialog.OK_OPTION) {
             String filename = dialog.getText();
-            File currentDirectory = this.mainTable.getdir();
+            File currentDirectory = mainTable.getcwd();
 
             if (filename != null && currentDirectory != null) {
                 File newDirectory = FileManager.newdir(currentDirectory, filename);
                 if (newDirectory != null) {
-                    this.mainTable.updateContents();
+                    mainTable.updateContents();
                 }
             }
         }
@@ -171,15 +198,15 @@ public class Window extends JFrame {
     public void setTrashStatus(File directory) {
         if (Platform.isWindows()) {
             if (FileManager.getTrashFilesPath().equals(directory.getName())) {
-                this.menuBar.setTrashItemToDelete();
+                menuBar.setTrashItemToDelete();
             } else {
-                this.menuBar.setTrashItemToMove();
+                menuBar.setTrashItemToMove();
             }
         } else {
             if (FileManager.getTrashFilesPath().equals(directory.getAbsolutePath())) {
-                this.menuBar.setTrashItemToDelete();
+                menuBar.setTrashItemToDelete();
             } else {
-                this.menuBar.setTrashItemToMove();
+                menuBar.setTrashItemToMove();
             }
         }
     }

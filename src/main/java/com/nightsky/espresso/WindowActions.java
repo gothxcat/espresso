@@ -29,22 +29,21 @@ public class WindowActions {
     }
 
     private void addListeners() {
-        this.window.closeActionListener = new CloseActionListener();
-        this.window.DeleteActionListener = new DeleteActionListener();
-        this.window.upActionListener = new UpActionListener();
-        this.window.newDirectoryActionListener = new NewDirectoryActionListener();
-        this.window.reloadActionListener = new ReloadActionListener();
-        this.window.toggleMenuActionListener = new ToggleMenuActionListener();
+        window.closeActionListener = new CloseActionListener();
+        window.DeleteActionListener = new DeleteActionListener();
+        window.upActionListener = new UpActionListener();
+        window.newDirectoryActionListener = new NewDirectoryActionListener();
+        window.reloadActionListener = new ReloadActionListener();
     }
 
     public void addDirectoryListeners(FileTable table, JTextField directoryField, JLabel detailsLabel) {
-        DirectoryListener directoryListener = new DirectoryListener(this.window, directoryField, detailsLabel);
+        DirectoryListener directoryListener = new DirectoryListener(window, directoryField, detailsLabel);
 
-        this.window.mainTable.registerDirectoryListener(directoryListener);
-        directoryListener.onDirectoryChanged(this.window.mainTable.getdir());
+        window.mainTable.addDirectoryChangedListener(directoryListener);
+        directoryListener.onDirectoryChanged(window.mainTable.getcwd());
 
-        this.window.directoryFieldActionListener = new DirectoryFieldActionListener(directoryField);
-        directoryField.addActionListener(this.window.directoryFieldActionListener);
+        window.directoryFieldActionListener = new DirectoryFieldActionListener(directoryField);
+        directoryField.addActionListener(window.directoryFieldActionListener);
     }
 
     private class DirectoryListener implements FileTableDirectoryListener {
@@ -61,7 +60,7 @@ public class WindowActions {
         public void onDirectoryChanged(File directory)
         {
             detailsLabel.setText(FileManager.getDetailsString(directory));
-            window.setDirectoryFieldContents(this.directoryField, directory);
+            window.setDirectoryFieldContents(directoryField, directory);
             window.setTrashStatus(directory);
 
             try {
@@ -89,13 +88,13 @@ public class WindowActions {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            this.action();
+            action();
         }
 
         @Override
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                this.action();
+                action();
             }
         }
 
@@ -171,19 +170,6 @@ public class WindowActions {
         }
     }
 
-    private final class ToggleMenuActionListener extends ActionKeyListener {
-        @Override
-        protected void action() {
-            if (window.menuBar.isVisible()) {
-                window.menuBar.setVisible(false);
-                window.mainPanel.requestFocus();
-            } else {
-                window.menuBar.setVisible(true);
-                window.menuBar.requestFocus();
-            }
-        }
-    }
-
     public final class DirectoryFieldActionListener implements ActionListener {
         private JTextField directoryField;
 
@@ -197,7 +183,7 @@ public class WindowActions {
             if (file.isDirectory()) {
                 window.mainTable.chdir(file);
             } else {
-                window.setDirectoryFieldContents(directoryField, window.mainTable.getdir());
+                window.setDirectoryFieldContents(directoryField, window.mainTable.getcwd());
             }
         }
     }
@@ -210,17 +196,17 @@ public class WindowActions {
         DirectoryWatcherThread(WatchService service, FileTable table) {
             this.service = service;
             this.table = table;
-            this.isFinished = false;
+            isFinished = false;
         }
 
         @Override
         public void run() {
             try {
                 WatchKey key;
-                while ((key = this.service.take()) != null && !this.isFinished) {
+                while ((key = service.take()) != null && !isFinished) {
                     Iterator<WatchEvent<?>> eventsIterator = key.pollEvents().iterator();
                     while (eventsIterator.hasNext()) {
-                        this.table.updateContents();
+                        table.updateContents();
                         eventsIterator.next();
                     }
 
@@ -232,7 +218,7 @@ public class WindowActions {
         }
 
         public void finish() {
-            this.isFinished = true;
+            isFinished = true;
         }
     }
 }

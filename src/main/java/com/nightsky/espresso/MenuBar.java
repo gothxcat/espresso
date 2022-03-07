@@ -22,7 +22,6 @@ public class MenuBar extends JMenuBar {
 
     public JMenu viewMenu;
     public JMenuItem reloadMenuItem;
-    public JMenuItem toggleMenuItem;
 
     MenuBar(Window window)
     {
@@ -56,10 +55,7 @@ public class MenuBar extends JMenuBar {
         /* View menu */
         viewMenu = new JMenu(Resources.getString("MENU_VIEW"));
         reloadMenuItem = new JMenuItem(Resources.getString("MENU_RELOAD"));
-        toggleMenuItem = new JMenuItem(Resources.getString("MENU_TOGGLE_MENU"));
-        
         viewMenu.add(reloadMenuItem);
-        viewMenu.add(toggleMenuItem);
 
 
         add(fileMenu);
@@ -75,7 +71,6 @@ public class MenuBar extends JMenuBar {
         trashItem.addActionListener(window.DeleteActionListener);
         upItem.addActionListener(window.upActionListener);
         reloadMenuItem.addActionListener(window.reloadActionListener);
-        toggleMenuItem.addActionListener(window.toggleMenuActionListener);
     }
 
     private void setAccelerators()
@@ -85,7 +80,6 @@ public class MenuBar extends JMenuBar {
         trashItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0, false));
         upItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK));
         reloadMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK));
-        toggleMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_M, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
     }
 
     public void setTrashItemToMove()

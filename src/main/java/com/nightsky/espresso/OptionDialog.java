@@ -33,23 +33,23 @@ public abstract class OptionDialog extends JDialog implements ActionListener, Wi
                         String okButtonString,
                         String cancelButtonString) {
         super(parent);
-        this.setTitle(title);
+        setTitle(title);
 
-        this.messageLabel = new JLabel(messageString);
-        this.okButton = new JButton(okButtonString);
-        this.cancelButton = new JButton(cancelButtonString);
+        messageLabel = new JLabel(messageString);
+        okButton = new JButton(okButtonString);
+        cancelButton = new JButton(cancelButtonString);
 
-        this.textField = new JTextField();
-        this.textField.setCaretColor(Platform.caretColor);
+        textField = new JTextField();
+        textField.setCaretColor(Platform.caretColor);
 
-        this.selectedOption = OptionDialog.UNININITIALIZED_VALUE;
+        selectedOption = UNININITIALIZED_VALUE;
 
-        this.okButton.addActionListener(this);
-        this.cancelButton.addActionListener(this);
-        this.textField.addActionListener(this);
-        this.addWindowListener(this);
+        okButton.addActionListener(this);
+        cancelButton.addActionListener(this);
+        textField.addActionListener(this);
+        addWindowListener(this);
 
-        this.setLayout(new GridBagLayout());
+        setLayout(new GridBagLayout());
         
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(6, 6, 6, 6);
@@ -58,31 +58,31 @@ public abstract class OptionDialog extends JDialog implements ActionListener, Wi
         constraints.gridy = 0;
         constraints.gridx = 0;
         constraints.gridwidth = 1;
-        this.add(this.messageLabel, constraints);
+        add(messageLabel, constraints);
 
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.gridy = 1;
         constraints.gridx = 0;
         constraints.gridwidth = 3;
-        this.add(this.textField, constraints);
+        add(textField, constraints);
 
         constraints.fill = GridBagConstraints.NONE;
         constraints.gridy = 2;
         constraints.gridx = 1;
         constraints.gridwidth = 1;
-        this.add(this.okButton, constraints);
+        add(okButton, constraints);
 
         constraints.gridx = 2;
-        this.add(this.cancelButton, constraints);
+        add(cancelButton, constraints);
         
-        this.pack();
-        this.setLocationRelativeTo(null);
+        pack();
+        setLocationRelativeTo(null);
     }
     
     public void end() {
-        if (this.isVisible()) {
-            this.setVisible(false);
-            this.dispose();
+        if (isVisible()) {
+            setVisible(false);
+            dispose();
         }
     }
 
@@ -91,7 +91,7 @@ public abstract class OptionDialog extends JDialog implements ActionListener, Wi
     }
 
     public String getText() {
-        return this.text;
+        return text;
     }
 
     @Override
@@ -107,19 +107,19 @@ public abstract class OptionDialog extends JDialog implements ActionListener, Wi
     @Override
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        if (source == this.okButton || source == this.textField) {
-            this.selectedOption = OptionDialog.OK_OPTION;
-            this.text = textField.getText();
-            this.end();
-        } else if (source == this.cancelButton) {
-            this.selectedOption = OptionDialog.CANCEL_OPTION;
-            this.end();
+        if (source == okButton || source == textField) {
+            selectedOption = OK_OPTION;
+            text = textField.getText();
+            end();
+        } else if (source == cancelButton) {
+            selectedOption = CANCEL_OPTION;
+            end();
         }
     }
 
     @Override
     public void windowClosing(WindowEvent event) {
-        this.end();
+        end();
     }
 
     @Override

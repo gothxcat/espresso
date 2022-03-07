@@ -42,18 +42,18 @@ public class FileManager {
 
                     case size:
                         fileObject.setAttribute(FileManagerAttribute.size,
-                            FileManager.formatSize(file.length())
+                            formatSize(file.length())
                         );
                         break;
 
                     case type:
                         fileObject.setAttribute(FileManagerAttribute.type,
-                        FileManager.getFileTypeString(file)
+                        getFileTypeString(file)
                         );
                         break;
 
                     case dateModified:
-                        ZonedDateTime zoneDateModified = FileManager.zoneDateFromEpoch(file.lastModified());
+                        ZonedDateTime zoneDateModified = zoneDateFromEpoch(file.lastModified());
                         fileObject.setAttribute(FileManagerAttribute.dateModified,
                             zoneDateModified.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT))
                         );
@@ -124,7 +124,7 @@ public class FileManager {
 
         String sizeString = "";
         if (size > 0) {
-            sizeString = FileManager.formatSize(size) + " " + Resources.getString("LABEL_BYTES");
+            sizeString = formatSize(size) + " " + Resources.getString("LABEL_BYTES");
         }
 
         String details;
@@ -144,9 +144,9 @@ public class FileManager {
     public static boolean moveToTrash(File file) {
         FileUtils fileUtils = FileUtils.getInstance();
         if (fileUtils.hasTrash()) {
-            return FileManager.moveToTrashJNA(fileUtils, file);
+            return moveToTrashJNA(fileUtils, file);
         } else if (Platform.isUnix()) {
-            return FileManager.moveToTrashUnix(file);
+            return moveToTrashUnix(file);
         } else {
             return false;
         }
@@ -154,7 +154,7 @@ public class FileManager {
 
     public static boolean moveToTrash(List<File> files) {
         for (File file : files) {
-            if (!FileManager.moveToTrash(file)) {
+            if (!moveToTrash(file)) {
                 return false;
             }
         }
@@ -172,7 +172,7 @@ public class FileManager {
     }
 
     private static boolean moveToTrashUnix(File file) {
-        Path trashPath = Paths.get(FileManager.getAbsoluteTrashPathUnix());
+        Path trashPath = Paths.get(getAbsoluteTrashPathUnix());
         File trashDirectory = new File(trashPath.toString());
         if (!trashDirectory.exists()) {
             if (!trashDirectory.mkdirs()) {
@@ -267,14 +267,14 @@ public class FileManager {
         if (fileUtils.hasTrash()) {
             return "$RECYCLE.BIN";
         } else if (Platform.isUnix()) {
-            return FileManager.getAbsoluteTrashFilesPathUnix();
+            return getAbsoluteTrashFilesPathUnix();
         } else {
             return null;
         }
     }
 
     public static String getAbsoluteTrashFilesPathUnix() {
-        return Paths.get(FileManager.getAbsoluteTrashPathUnix(), "files").toAbsolutePath().toString();
+        return Paths.get(getAbsoluteTrashPathUnix(), "files").toAbsolutePath().toString();
     }
 
     public static String getAbsoluteTrashPathUnix() {
@@ -301,7 +301,7 @@ public class FileManager {
 
     public static boolean delete(List<File> files) {
         for (File file : files) {
-            if (!FileManager.delete(file)) {
+            if (!delete(file)) {
                 return false;
             }
         }
@@ -334,17 +334,17 @@ public class FileManager {
         public FileManagerObject(File file, FileManagerAttribute[] attributeOrder) {
             this.file = file;
             this.attributeOrder = attributeOrder;
-            this.attributes = new HashMap<FileManagerAttribute,String>();
+            attributes = new HashMap<FileManagerAttribute,String>();
         }
 
         public void setAttribute(FileManagerAttribute attribute, String data) {
-            this.attributes.put(attribute, data);
+            attributes.put(attribute, data);
         }
 
         public String[] getAttributeStrings() {
             List<String> attributeList = new ArrayList<String>();
             for (FileManagerAttribute attribute : attributeOrder) {
-                attributeList.add(this.attributes.get(attribute));
+                attributeList.add(attributes.get(attribute));
             }
 
             return attributeList.toArray(new String[0]);
